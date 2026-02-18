@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Terminal 6: On The Move ✈️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: rgba(30, 30, 70, 0.5);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .glass-card {
+            background: rgba(40, 40, 90, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.8), 0 0 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .aura-glow {
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+        }
+
+        .flip-card {
+            perspective: 1000px;
+            height: 380px;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front,
+        .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+        }
+
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            margin: 8px 0;
+        }
+
+        .chat-sent {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-received {
+            background: rgba(60, 60, 90, 0.9);
+            border-bottom-left-radius: 4px;
+        }
+
+        .word-chip {
+            transition: all 0.2s;
+        }
+
+        .word-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .progress-bar {
+            transition: width 0.5s ease-out;
+            background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f0f23;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #6366f1;
+            border-radius: 3px;
+        }
+
+        .typing-dot {
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .float-anim {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+    <base target="_blank">
+</head>
+
+<body class="pb-24" x-data="app()">
+
+    <!-- AURA Counter -->
+    <div class="fixed top-4 right-4 z-50 glass rounded-full px-4 py-2 flex items-center gap-2 aura-glow" x-show="aura > 0">
+        <i class="fas fa-bolt text-yellow-400"></i>
+        <span class="font-bold text-yellow-400">AURA: <span x-text="aura"></span></span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 glass z-40">
+        <div class="flex justify-around items-center py-3">
+            <button @click="section = 'vocab'" :class="section === 'vocab' ? 'text-indigo-400' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-xs">
+                <i class="fas fa-book text-xl"></i><span>Vocab</span>
+            </button>
+            <button @click="section = 'game'" :class="section === 'game' ? 'text-indigo-400' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-xs">
+                <i class="fas fa-gamepad text-xl"></i><span>Speedrun</span>
+            </button>
+            <button @click="section = 'grammar'" :class="section === 'grammar' ? 'text-indigo-400' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-xs">
+                <i class="fas fa-sparkles text-xl"></i><span>Grammar</span>
+            </button>
+            <button @click="section = 'lore'" :class="section === 'lore' ? 'text-indigo-400' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-xs">
+                <i class="fas fa-scroll text-xl"></i><span>Lore</span>
+            </button>
+            <button @click="section = 'quiz'" :class="section === 'quiz' ? 'text-indigo-400' : 'text-gray-400'" class="flex flex-col items-center gap-1 text-xs">
+                <i class="fas fa-trophy text-xl"></i><span>Boss</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="px-4 pt-6 max-w-md mx-auto">
+
+        <!-- HERO -->
+        <header class="text-center mb-8 float-anim">
+            <div class="inline-block glass rounded-2xl px-6 py-3 mb-4 aura-glow">
+                <span class="text-indigo-400 font-bold text-sm tracking-widest">TERMINAL 6</span>
+            </div>
+            <h1 class="text-5xl font-black mb-2 neon-text bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
+                On The Move
+            </h1>
+            <p class="text-indigo-300 text-lg mb-2">✈️ Airport Arc Activated</p>
+            <p class="text-gray-400 text-sm">Mission: Survive the Airport. Secure the Bag.</p>
+        </header>
+
+        <!-- VOCAB-MAXXING -->
+        <div x-show="section === 'vocab'" class="space-y-4">
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-indigo-500">
+                <h2 class="text-2xl font-bold mb-2">📚 Vocab-maxxing</h2>
+                <p class="text-gray-400 text-sm">Pages 88-91. Memorize this or you're cooked. 💀</p>
+            </div>
+
+            <p class="text-indigo-300 text-sm text-center">Tap cards to unlock knowledge ✨</p>
+
+            <template x-for="(word, index) in vocab" :key="index">
+                <div class="flip-card cursor-pointer mb-4" :class="{ 'flipped': word.flipped }" @click="flipCard(index)">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front glass-card flex flex-col items-center justify-center p-6">
+                            <img :src="word.image" class="w-full h-48 object-cover rounded-xl mb-4" onerror="this.src='https://placehold.co/400x200/6366f1/ffffff?text=' + word.english">
+                            <h3 class="text-2xl font-bold text-indigo-300" x-text="word.english"></h3>
+                            <button @click.stop="speak(word.english)" class="mt-3 w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center hover:bg-indigo-500 transition">
+                                <i class="fas fa-volume-up"></i>
+                            </button>
+                            <p class="text-xs text-gray-500 mt-2">Tap to flip 👆</p>
+                        </div>
+                        <div class="flip-card-back glass-card flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-900 to-indigo-900">
+                            <h3 class="text-3xl font-bold mb-2 text-center text-white" x-text="word.indonesian"></h3>
+                            <p class="text-indigo-200 text-center text-sm italic mb-4" x-text="word.example"></p>
+                            <div class="flex gap-2">
+                                <button @click.stop="speak(word.english)" class="px-4 py-2 bg-indigo-600 rounded-lg text-sm hover:bg-indigo-500">
+                                    <i class="fas fa-volume-up mr-1"></i> Listen
+                                </button>
+                                <button @click.stop="copyWord(word.english)" class="px-4 py-2 bg-white/20 rounded-lg text-sm hover:bg-white/30">
+                                    <i class="fas fa-copy mr-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- SPEEDRUN (CODE CRACKER) -->
+        <div x-show="section === 'game'" class="space-y-4">
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-pink-500">
+                <h2 class="text-2xl font-bold mb-2">⚡ Speedrun</h2>
+                <p class="text-white-400 text-sm mb-2">Page 88: Sequence the airport steps. BEWARE OF IMPOSTER WORDS.</p>
+                <p class="text-gray-200 text-sm italic">Urutkan tahapan aksi di bandara.</p>
+            </div>
+
+            <div class="glass rounded-xl p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm text-gray-400">Timer:</span>
+                    <span class="font-mono text-2xl font-bold text-pink-400" x-text="formatTime(gameTime)"></span>
+                </div>
+
+                <p class="text-sm text-indigo-300 mb-3">Drop zones (in order):</p>
+                <div class="space-y-2 mb-4">
+                    <template x-for="(zone, idx) in dropZones" :key="idx">
+                        <div @dragover.prevent="$event.preventDefault()" @drop.prevent="drop(idx)" class="border-2 border-dashed rounded-lg p-3 text-center min-h-[50px] transition-all" :class="zone ? 'border-pink-500 bg-pink-900/20 aura-glow' : 'border-gray-600'">
+                            <span class="font-semibold" :class="zone ? 'text-pink-300' : 'text-gray-500'" x-text="zone || 'Step ' + (idx+1)"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <p class="text-sm text-indigo-300 mb-3">Draggable items:</p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <template x-for="(step, idx) in gameSteps" :key="idx">
+                        <div draggable="true" @dragstart="dragStart(idx)" x-show="!step.placed" class="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 rounded-lg text-sm cursor-grab active:cursor-grabbing hover:scale-105 transition select-none word-chip">
+                            <span x-text="step.text"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <button @click="checkGame()" class="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:opacity-90 py-3 rounded-xl font-bold mb-2 transition">
+                    Check Order 🎯
+                </button>
+                <button @click="resetGame()" class="w-full bg-white/10 hover:bg-white/20 py-2 rounded-xl text-sm transition">
+                    Reset Speedrun
+                </button>
+
+                <div x-show="gameMessage" :class="gameWin ? 'bg-green-900/30 border-green-500' : 'bg-red-900/30 border-red-500'" class="mt-4 p-4 rounded-xl border text-center" x-transition>
+                    <p class="font-bold text-lg" :class="gameWin ? 'text-green-400' : 'text-red-400'" x-text="gameMessage"></p>
+                    <p x-show="gameWin" class="text-sm text-gray-400 mt-1">Aura +100! ✨</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIGMA GRAMMAR -->
+        <div x-show="section === 'grammar'" class="space-y-4">
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-yellow-500">
+                <h2 class="text-2xl font-bold mb-2">🧠 Grammar for The Big-Brainer</h2>
+                <p class="text-gray-400 text-sm">Master these tenses or you're cooked. No cap. 📚</p>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- SECTION 1: PRESENT PERFECT PROGRESSIVE -->
+            <!-- ============================================ -->
+            <div class="glass rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-xl">
+                        ⏰
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl text-indigo-300">Present Perfect Progressive</h3>
+                        <p class="text-xs text-gray-400">The "I Have Been Waiting" Tense</p>
+                    </div>
+                </div>
+
+                <!-- Theory Box -->
+                <div class="bg-indigo-900/30 border border-indigo-500/30 rounded-xl p-4 mb-4">
+                    <h4 class="font-bold text-indigo-300 mb-2">📖 What is it?</h4>
+                    <p class="text-sm text-gray-300 mb-2">
+                        Used for actions that <strong>started in the past</strong> and are <strong>still happening now</strong>.
+                    </p>
+                    <p class="text-xs text-indigo-200 italic">
+                        (Digunakan untuk kegiatan yang dimulai di masa lalu dan masih berlangsung sampai sekarang)
+                    </p>
+                </div>
+
+                <!-- Formula Box -->
+                <div class="bg-black/40 rounded-xl p-4 mb-4 border-l-4 border-green-500">
+                    <h4 class="font-bold text-green-400 mb-2">🔢 Formula:</h4>
+                    <div class="space-y-2 text-sm">
+                        <p class="font-mono text-lg text-center text-white">
+                            Subject + have/has + been + verb-ing
+                        </p>
+                        <div class="border-t border-white/10 pt-2 mt-2">
+                            <p class="text-gray-400 text-xs">
+                                • I/You/We/They + <span class="text-green-400">have</span> been waiting
+                            </p>
+                            <p class="text-gray-400 text-xs">
+                                • He/She/It + <span class="text-green-400">has</span> been waiting
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Examples with Indo -->
+                <div class="space-y-3 mb-4">
+                    <h4 class="font-bold text-indigo-300">💡 Examples:</h4>
+                    
+                    <!-- Example 1 -->
+                    <div class="bg-white/5 rounded-lg p-4">
+                        <p class="text-sm font-medium text-white mb-1">
+                            "I <span class="text-yellow-400">have been waiting</span> at the departure gate for 2 hours."
+                        </p>
+                        <p class="text-xs text-indigo-300 italic">
+                            "Aku sudah menunggu di gerbang keberangkatan selama 2 jam (dan masih menunggu)."
+                        </p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-indigo-600/30 px-2 py-1 rounded text-indigo-300">have been waiting</span>
+                            <span class="text-xs bg-green-600/30 px-2 py-1 rounded text-green-300">for 2 hours (duration)</span>
+                        </div>
+                    </div>
+
+                    <!-- Example 2 -->
+                    <div class="bg-white/5 rounded-lg p-4">
+                        <p class="text-sm font-medium text-white mb-1">
+                            "She <span class="text-yellow-400">has been studying</span> English since 2020."
+                        </p>
+                        <p class="text-xs text-indigo-300 italic">
+                            "Dia sudah belajar bahasa Inggris sejak tahun 2020 (dan masih belajar)."
+                        </p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-indigo-600/30 px-2 py-1 rounded text-indigo-300">has been studying</span>
+                            <span class="text-xs bg-purple-600/30 px-2 py-1 rounded text-purple-300">since 2020 (starting point)</span>
+                        </div>
+                    </div>
+
+                    <!-- Example 3 -->
+                    <div class="bg-white/5 rounded-lg p-4">
+                        <p class="text-sm font-medium text-white mb-1">
+                            "We <span class="text-yellow-400">have been standing</span> in line since 9 AM."
+                        </p>
+                        <p class="text-xs text-indigo-300 italic">
+                            "Kami sudah berdiri antri sejak jam 9 pagi (dan masih berdiri)."
+                        </p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-indigo-600/30 px-2 py-1 rounded text-indigo-300">have been standing</span>
+                            <span class="text-xs bg-purple-600/30 px-2 py-1 rounded text-purple-300">since 9 AM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOR vs SINCE Explanation -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="bg-green-900/20 border border-green-500/30 rounded-xl p-4">
+                        <h4 class="font-bold text-green-400 mb-2 flex items-center gap-2">
+                            <i class="fas fa-clock"></i> FOR
+                        </h4>
+                        <p class="text-sm text-gray-300 mb-2">
+                            Use for <strong>duration</strong> (how long)
+                        </p>
+                        <p class="text-xs text-green-300 italic mb-3">
+                            (Digunakan untuk durasi/lama waktu)
+                        </p>
+                        <ul class="text-xs text-gray-400 space-y-1">
+                            <li>• for 2 hours (selama 2 jam)</li>
+                            <li>• for 3 days (selama 3 hari)</li>
+                            <li>• for 10 minutes (selama 10 menit)</li>
+                            <li>• for a long time (selama waktu yang lama)</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-purple-900/20 border border-purple-500/30 rounded-xl p-4">
+                        <h4 class="font-bold text-purple-400 mb-2 flex items-center gap-2">
+                            <i class="fas fa-play-circle"></i> SINCE
+                        </h4>
+                        <p class="text-sm text-gray-300 mb-2">
+                            Use for <strong>starting point</strong> (when it began)
+                        </p>
+                        <p class="text-xs text-purple-300 italic mb-3">
+                            (Digunakan untuk titik awal/waktu mulai)
+                        </p>
+                        <ul class="text-xs text-gray-400 space-y-1">
+                            <li>• since 2020 (sejak 2020)</li>
+                            <li>• since morning (sejak pagi)</li>
+                            <li>• since 9 AM (sejak jam 9)</li>
+                            <li>• since last week (sejak minggu lalu)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Practice Game -->
+                <div class="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 rounded-xl p-5 border border-indigo-500/30">
+                    <h4 class="font-bold text-lg mb-4 text-white">🎮 For vs Since Challenge</h4>
+                    <p class="text-sm text-gray-400 mb-4">Choose the correct word! Pilih kata yang benar!</p>
+                    
+                    <template x-for="(q, idx) in forSinceQs" :key="idx">
+                        <div class="mb-4 p-4 bg-black/30 rounded-xl">
+                            <p class="text-sm font-medium mb-3" x-text="(idx+1) + '. ' + q.sentence"></p>
+                            <div class="flex gap-3">
+                                <button @click="checkForSince(idx, 'for')" 
+                                        :class="forSinceAns[idx] === 'for' ? (q.ans === 'for' ? 'bg-green-600 scale-105' : 'bg-red-600') : 'bg-white/10 hover:bg-white/20'"
+                                        class="flex-1 py-3 rounded-xl text-sm font-bold transition">FOR</button>
+                                <button @click="checkForSince(idx, 'since')" 
+                                        :class="forSinceAns[idx] === 'since' ? (q.ans === 'since' ? 'bg-green-600 scale-105' : 'bg-red-600') : 'bg-white/10 hover:bg-white/20'"
+                                        class="flex-1 py-3 rounded-xl text-sm font-bold transition">SINCE</button>
+                            </div>
+                            <div x-show="forSinceAns[idx]" class="mt-3 p-3 rounded-lg" :class="forSinceAns[idx] === q.ans ? 'bg-green-900/30' : 'bg-red-900/30'">
+                                <p class="text-sm" :class="forSinceAns[idx] === q.ans ? 'text-green-400' : 'text-red-400'" x-text="forSinceFeedback[idx]"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- SECTION 2: JUST / ALREADY / YET / STILL -->
+            <!-- ============================================ -->
+            <div class="glass rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-600 to-orange-600 flex items-center justify-center text-xl">
+                        💬
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl text-pink-300">Just / Already / Yet / Still</h3>
+                        <p class="text-xs text-gray-400">The Groupchat Words</p>
+                    </div>
+                </div>
+
+                <!-- Overview -->
+                <div class="bg-pink-900/20 border border-pink-500/30 rounded-xl p-4 mb-4">
+                    <h4 class="font-bold text-pink-300 mb-2">📖 Quick Reference (Referensi Cepat):</h4>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="bg-black/30 p-3 rounded-lg">
+                            <p class="text-green-400 font-bold">JUST</p>
+                            <p class="text-xs text-gray-400">= baru saja</p>
+                        </div>
+                        <div class="bg-black/30 p-3 rounded-lg">
+                            <p class="text-blue-400 font-bold">ALREADY</p>
+                            <p class="text-xs text-gray-400">= sudah</p>
+                        </div>
+                        <div class="bg-black/30 p-3 rounded-lg">
+                            <p class="text-orange-400 font-bold">YET</p>
+                            <p class="text-xs text-gray-400">= belum (negatif/tanya)</p>
+                        </div>
+                        <div class="bg-black/30 p-3 rounded-lg">
+                            <p class="text-purple-400 font-bold">STILL</p>
+                            <p class="text-xs text-gray-400">= masih</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Explanations -->
+                <div class="space-y-4 mb-4">
+                    
+                    <!-- JUST -->
+                    <div class="bg-green-900/20 border-l-4 border-green-500 rounded-r-xl p-4">
+                        <h4 class="font-bold text-green-400 mb-2">✨ JUST (Baru Saja)</h4>
+                        <p class="text-sm text-gray-300 mb-2">
+                            Use for something that happened <strong>a very short time ago</strong>.
+                        </p>
+                        <p class="text-xs text-green-300 italic mb-3">
+                            (Digunakan untuk sesuatu yang terjadi baru saja/moment yang lalu)
+                        </p>
+                        <div class="bg-black/30 rounded-lg p-3">
+                            <p class="text-sm text-white">
+                                "I have <span class="text-green-400 font-bold">just</span> arrived at the airport."
+                            </p>
+                            <p class="text-xs text-gray-400 italic">
+                                "Saya baru saja tiba di bandara."
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- ALREADY -->
+                    <div class="bg-blue-900/20 border-l-4 border-blue-500 rounded-r-xl p-4">
+                        <h4 class="font-bold text-blue-400 mb-2">✅ ALREADY (Sudah)</h4>
+                        <p class="text-sm text-gray-300 mb-2">
+                            Use for something that happened <strong>before now</strong> (earlier than expected).
+                        </p>
+                        <p class="text-xs text-blue-300 italic mb-3">
+                            (Digunakan untuk sesuatu yang sudah terjadi sebelum waktu yang diharapkan)
+                        </p>
+                        <div class="bg-black/30 rounded-lg p-3">
+                            <p class="text-sm text-white">
+                                "I have <span class="text-blue-400 font-bold">already</span> checked in."
+                            </p>
+                            <p class="text-xs text-gray-400 italic">
+                                "Saya sudah check-in."
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- YET -->
+                    <div class="bg-orange-900/20 border-l-4 border-orange-500 rounded-r-xl p-4">
+                        <h4 class="font-bold text-orange-400 mb-2">❓ YET (Belum)</h4>
+                        <p class="text-sm text-gray-300 mb-2">
+                            Use in <strong>negative sentences</strong> and <strong>questions</strong>. Usually at the END of the sentence.
+                        </p>
+                        <p class="text-xs text-orange-300 italic mb-3">
+                            (Digunakan di kalimat negatif dan pertanyaan, biasanya di akhir kalimat)
+                        </p>
+                        <div class="space-y-2">
+                            <div class="bg-black/30 rounded-lg p-3">
+                                <p class="text-sm text-white">
+                                    "Have you arrived <span class="text-orange-400 font-bold">yet</span>?"
+                                </p>
+                                <p class="text-xs text-gray-400 italic">
+                                    "Apakah kamu sudah tiba belum?"
+                                </p>
+                            </div>
+                            <div class="bg-black/30 rounded-lg p-3">
+                                <p class="text-sm text-white">
+                                    "I haven't found my passport <span class="text-orange-400 font-bold">yet</span>."
+                                </p>
+                                <p class="text-xs text-gray-400 italic">
+                                    "Saya belum menemukan paspor saya."
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STILL -->
+                    <div class="bg-purple-900/20 border-l-4 border-purple-500 rounded-r-xl p-4">
+                        <h4 class="font-bold text-purple-400 mb-2">⏳ STILL (Masih)</h4>
+                        <p class="text-sm text-gray-300 mb-2">
+                            Use for something that is <strong>continuing</strong> (not finished).
+                        </p>
+                        <p class="text-xs text-purple-300 italic mb-3">
+                            (Digunakan untuk sesuatu yang masih berlangsung/belum selesai)
+                        </p>
+                        <div class="bg-black/30 rounded-lg p-3">
+                            <p class="text-sm text-white">
+                                "I am <span class="text-purple-400 font-bold">still</span> waiting at the gate."
+                            </p>
+                            <p class="text-xs text-gray-400 italic">
+                                "Saya masih menunggu di gerbang."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Practice -->
+                <div class="bg-gray-900 rounded-2xl p-4 border border-gray-700">
+                    <h4 class="font-bold text-lg mb-4 text-pink-300">💬 The Groupchat Practice</h4>
+                    <p class="text-sm text-gray-400 mb-4">Complete the conversation! Lengkapi percakapannya!</p>
+                    
+                    <div class="space-y-3">
+                        <!-- Message 1 -->
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">D</div>
+                            <span class="text-xs text-gray-500">Dad_Gaming</span>
+                            <span class="text-xs text-gray-600">Today at 4:20 PM</span>
+                        </div>
+                        <div class="chat-bubble chat-received">
+                            <p class="text-sm">Are we cooked? Have you printed the boarding passes _____?</p>
+                        </div>
+                        
+                        <div x-show="chatAns[0]" class="flex items-center gap-2 justify-end mb-1">
+                            <span class="text-xs text-gray-600">Today at 4:21 PM</span>
+                            <span class="text-xs text-gray-500">Alex_Sigma</span>
+                            <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">A</div>
+                        </div>
+                        <div x-show="chatAns[0]" class="chat-bubble chat-sent" x-transition>
+                            <p class="text-sm" x-text="'Chill out bro, I have ' + chatAns[0] + ' printed them. They are literally in my hand.'"></p>
+                        </div>
+                        
+                        <div x-show="!chatAns[0]" class="flex gap-2 justify-end flex-wrap mt-2">
+                            <button @click="setChat(0, 'already')" class="px-4 py-2 bg-blue-600 rounded-full text-sm hover:bg-blue-500 transition word-chip">already ✅</button>
+                            <button @click="setChat(0, 'just')" class="px-4 py-2 bg-green-600 rounded-full text-sm hover:bg-green-500 transition word-chip">just ✨</button>
+                        </div>
+
+                        <!-- Message 2 -->
+                        <div x-show="chatAns[0]" class="flex items-center gap-2 mb-1 mt-4">
+                            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">D</div>
+                            <span class="text-xs text-gray-500">Dad_Gaming</span>
+                            <span class="text-xs text-gray-600">Today at 4:25 PM</span>
+                        </div>
+                        <div x-show="chatAns[0]" class="chat-bubble chat-received" x-transition>
+                            <p class="text-sm">Where is Amelie?! We haven't found her _____!</p>
+                        </div>
+                        
+                        <div x-show="chatAns[0] && chatAns[1]" class="flex items-center gap-2 justify-end mb-1">
+                            <span class="text-xs text-gray-600">Today at 4:26 PM</span>
+                            <span class="text-xs text-gray-500">Alex_Sigma</span>
+                            <div class="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold">A</div>
+                        </div>
+                        <div x-show="chatAns[0] && chatAns[1]" class="chat-bubble chat-sent" x-transition>
+                            <p class="text-sm">Don't panic, she's probably at the baggage claim!</p>
+                        </div>
+                        
+                        <div x-show="chatAns[0] && !chatAns[1]" class="flex gap-2 justify-end mt-2">
+                            <button @click="setChat(1, 'yet')" class="px-4 py-2 bg-orange-600 rounded-full text-sm hover:bg-orange-500 transition word-chip">yet ❓</button>
+                            <button @click="setChat(1, 'still')" class="px-4 py-2 bg-purple-600 rounded-full text-sm hover:bg-purple-500 transition word-chip">still ⏳</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Table -->
+                <div class="mt-6 bg-black/30 rounded-xl p-4">
+                    <h4 class="font-bold text-white mb-3">📝 Quick Summary (Ringkasan Cepat):</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left border-b border-white/10">
+                                    <th class="pb-2 text-indigo-300">Word</th>
+                                    <th class="pb-2 text-indigo-300">Arti</th>
+                                    <th class="pb-2 text-indigo-300">Use When</th>
+                                    <th class="pb-2 text-indigo-300">Position</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-300">
+                                <tr class="border-b border-white/5">
+                                    <td class="py-2 text-green-400 font-bold">JUST</td>
+                                    <td class="py-2">Baru saja</td>
+                                    <td class="py-2">Very recent</td>
+                                    <td class="py-2">Middle</td>
+                                </tr>
+                                <tr class="border-b border-white/5">
+                                    <td class="py-2 text-blue-400 font-bold">ALREADY</td>
+                                    <td class="py-2">Sudah</td>
+                                    <td class="py-2">Before expected</td>
+                                    <td class="py-2">Middle</td>
+                                </tr>
+                                <tr class="border-b border-white/5">
+                                    <td class="py-2 text-orange-400 font-bold">YET</td>
+                                    <td class="py-2">Belum</td>
+                                    <td class="py-2">Negative/Question</td>
+                                    <td class="py-2">END</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 text-purple-400 font-bold">STILL</td>
+                                    <td class="py-2">Masih</td>
+                                    <td class="py-2">Continuing</td>
+                                    <td class="py-2">Middle</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cheat Sheet Card -->
+            <div class="glass-card rounded-xl p-6 bg-gradient-to-br from-yellow-900/20 to-orange-900/20 border border-yellow-500/30">
+                <h3 class="font-bold text-xl mb-4 text-yellow-400 flex items-center gap-2">
+                    <i class="fas fa-scroll"></i> Cheat Sheet (Contekan)
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div class="bg-black/30 rounded-lg p-3">
+                        <p class="text-yellow-300 font-bold mb-1">Present Perfect Progressive:</p>
+                        <p class="text-gray-300">S + have/has + been + V-ing</p>
+                        <p class="text-xs text-gray-500 italic">I have been waiting for 2 hours.</p>
+                    </div>
+                    <div class="bg-black/30 rounded-lg p-3">
+                        <p class="text-yellow-300 font-bold mb-1">FOR vs SINCE:</p>
+                        <p class="text-gray-300">FOR + duration (2 hours, 3 days)</p>
+                        <p class="text-gray-300">SINCE + starting point (2020, 9 AM)</p>
+                    </div>
+                    <div class="bg-black/30 rounded-lg p-3">
+                        <p class="text-yellow-300 font-bold mb-1">JUST/ALREADY/YET/STILL:</p>
+                        <p class="text-gray-300">JUST = baru saja | ALREADY = sudah</p>
+                        <p class="text-gray-300">YET = belum (di akhir) | STILL = masih</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THE LORE -->
+        <div x-show="section === 'lore'" class="space-y-4">
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-purple-500">
+                <h2 class="text-2xl font-bold mb-2">📖 The Lore </h2>
+                <p class="text-white-400 text-sm mb-1"> <strong>READ YOUR BOOK</strong> pages 94-95. The main character energy is strong with this one.</p>
+                    </p>
+                <div class="bg-black/30 rounded-lg p-3 border-l-2 border-pink-500">
+                    <p class="text-xs text-red-300 font-bold mb-1">(not so important) NOTE:</p>
+                    <p class="text-xs text-gray-400 mb-1">"Lore" is just a slang for "Story"</p>
+            </div>
+        </div>
+            <div class="glass rounded-xl p-5 bg-gradient-to-br from-purple-900/20 to-indigo-900/20 border border-purple-500/30">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-2xl">⚠️</span>
+                    <span class="font-bold text-purple-300">LORE DROP</span>
+                </div>
+                <p class="text-sm text-gray-300 leading-relaxed mb-4">
+                    Alex & Dad are moving to Vietnam. Dad is having a moment at the luggage check-in. Meanwhile, Amelie (3yo) goes full stealth-mode and literally vanishes. 💀
+                </p>
+                <p class="text-sm text-gray-300 leading-relaxed mb-4">
+                    They track her dropped candy like absolute pro-gamers, past security, up the elevator. Final Boss Room: Arrivals... where she's literally riding the baggage carousel. No cap.
+                </p>
+                <div class="bg-black/30 rounded-lg p-3 border-l-2 border-pink-500">
+                    <p class="text-xs text-pink-300 font-bold mb-1">Moral of the story:</p>
+                    <p class="text-xs text-gray-400">Always keep an eye on your little siblings at the airport, and don't be afraid to ask for help when you're lost!</p>
+                </div>
+            </div>
+
+            <div class="glass rounded-xl p-5">
+                <h3 class="font-bold text-lg mb-4 text-indigo-300">🧠 Lore Check (Comprehension)</h3>
+                <template x-for="(q, idx) in storyQuestions" :key="idx">
+                    <div class="mb-4 p-4 bg-black/20 rounded-xl">
+                        <p class="font-semibold mb-3 text-sm" x-text="(idx+1) + '. ' + q.question"></p>
+                        <div class="space-y-2">
+                            <template x-for="(opt, optIdx) in q.options" :key="optIdx">
+                                <button @click="answerStory(idx, optIdx)" :class="storyAnswers[idx] === optIdx ? (q.correct === optIdx ? 'bg-green-600' : 'bg-red-600') : 'bg-white/10 hover:bg-white/20'" class="w-full text-left px-4 py-3 rounded-lg text-sm transition flex justify-between items-center">
+                                    <span x-text="opt"></span>
+                                    <i x-show="storyAnswers[idx] === optIdx" :class="q.correct === optIdx ? 'fas fa-check' : 'fas fa-times'"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="storyComplete" class="glass rounded-xl p-4 text-center bg-green-900/20 border border-green-500" x-transition>
+                    <p class="text-green-400 font-bold text-lg">🎉 Lore Master!</p>
+                    <p class="text-sm text-gray-400">You understood the assignment! Aura +50</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINAL BOSS -->
+        <div x-show="section === 'quiz'" class="space-y-4">
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-red-500">
+                <h2 class="text-2xl font-bold mb-2">🐉 Final Boss</h2>
+                <p class="text-gray-400 text-sm">Summative Assessment Practice. Don't throw the game now!</p>
+            </div>
+
+            <!-- MODE SELECTOR -->
+            <div x-show="!practiceMode && !realQuizMode" class="glass rounded-xl p-6 text-center space-y-4">
+                <p class="text-lg font-semibold text-indigo-300">Choose Your Challenge:</p>
+                <div class="grid grid-cols-1 gap-3">
+                    <button @click="startPractice()" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 py-4 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                        <i class="fas fa-dumbbell"></i>
+                        Practice Mode (With Feedback)
+                    </button>
+                    <button @click="startRealQuiz()" class="bg-gradient-to-r from-red-600 to-pink-600 hover:opacity-90 py-4 rounded-xl font-bold transition flex items-center justify-center gap-2">
+                        <i class="fas fa-fire"></i>
+                        Real Deal (Test Simulation)
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Practice Mode = instant feedback + explanations<br>Real Deal = just like the actual test, no hints!</p>
+            </div>
+
+            <!-- PRACTICE MODE -->
+            <div x-show="practiceMode && !practiceDone" class="space-y-4">
+                <!-- Progress -->
+                <div class="glass rounded-xl p-4">
+                    <div class="flex justify-between text-sm text-gray-400 mb-2">
+                        <span>Question <span x-text="practiceIdx + 1"></span>/25</span>
+                        <span class="text-xs bg-indigo-600/30 px-2 py-1 rounded" x-text="practiceQs[practiceIdx].type"></span>
+                    </div>
+                    <div class="h-3 bg-gray-700 rounded-full overflow-hidden">
+                        <div class="progress-bar h-full rounded-full" :style="'width:' + ((practiceIdx+1)/25*100) + '%'"></div>
+                    </div>
+                </div>
+
+                <!-- Question Card -->
+                <div class="glass-card rounded-xl p-6">
+                    <!-- Reading Text for Q1-6 -->
+                    <div x-show="practiceIdx < 6" class="bg-black/30 rounded-lg p-4 mb-4 border-l-4 border-indigo-500">
+                        <h4 class="font-bold text-indigo-300 mb-2 text-sm">📖 Reading Text:</h4>
+                        <p class="text-sm text-gray-300 leading-relaxed italic">
+                            "Alex and his family are at the airport. They have just checked in their baggage at the check-in counter. Now, they need to go through security before heading to their departure gate. Alex has been waiting in line for 15 minutes already. His little sister, Amelie, has been eating candy since they arrived. Their flight hasn't taken off yet, but they should board soon. After security, they will go to the departures area. Their plane will take off at 3:00 PM and land in Hanoi at 8:00 PM. Their mother has been working in Hanoi for six weeks already. She will meet them at arrivals when they land."
+                        </p>
+                    </div>
+
+                    <p class="text-lg font-semibold mb-6" x-html="practiceQs[practiceIdx].q"></p>
+
+                    <!-- Multiple Choice -->
+                    <template x-if="practiceQs[practiceIdx].type === 'MC'">
+                        <div class="space-y-3">
+                            <template x-for="(opt, idx) in practiceQs[practiceIdx].opts" :key="idx">
+                                <button @click="selectPractice(idx)" 
+                                        :disabled="practiceAnswered"
+                                        :class="{
+                                            'bg-gradient-to-r from-indigo-600 to-purple-600 border-2 border-white/50': practiceSel === idx && !practiceAnswered,
+                                            'bg-green-600/80 border-2 border-green-400': practiceAnswered && idx === practiceQs[practiceIdx].correct,
+                                            'bg-red-600/80 border-2 border-red-400': practiceAnswered && practiceSel === idx && idx !== practiceQs[practiceIdx].correct,
+                                            'bg-white/5 hover:bg-white/10 border-2 border-transparent': !practiceAnswered || (practiceAnswered && practiceSel !== idx && idx !== practiceQs[practiceIdx].correct)
+                                        }"
+                                        class="w-full text-left px-5 py-4 rounded-xl transition text-sm disabled:cursor-not-allowed">
+                                    <span x-text="String.fromCharCode(65 + idx) + '. ' + opt"></span>
+                                    <i x-show="practiceAnswered && idx === practiceQs[practiceIdx].correct" class="fas fa-check float-right mt-1"></i>
+                                    <i x-show="practiceAnswered && practiceSel === idx && idx !== practiceQs[practiceIdx].correct" class="fas fa-times float-right mt-1"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Fill in the Blank -->
+                    <template x-if="practiceQs[practiceIdx].type === 'FIB'">
+                        <div class="space-y-4">
+                            <div class="flex flex-wrap gap-2 justify-center mb-4">
+                                <template x-for="word in practiceQs[practiceIdx].wordBank" :key="word">
+                                    <span class="text-xs bg-white/10 px-3 py-1 rounded-full text-gray-300" x-text="word"></span>
+                                </template>
+                            </div>
+                            <input type="text" x-model="practiceInput" :disabled="practiceAnswered"
+                                   class="w-full bg-black/30 border-2 border-indigo-500/30 rounded-xl px-4 py-3 text-center text-lg focus:border-indigo-500 focus:outline-none transition disabled:opacity-50"
+                                   placeholder="Type your answer here..." @keyup.enter="checkPracticeFIB()">
+                            <button @click="checkPracticeFIB()" :disabled="!practiceInput || practiceAnswered"
+                                    class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-600 py-3 rounded-xl font-bold transition">
+                                Check Answer
+                            </button>
+                        </div>
+                    </template>
+
+                    <!-- Essay -->
+                    <template x-if="practiceQs[practiceIdx].type === 'Essay'">
+                        <div class="space-y-4">
+                            <textarea x-model="practiceEssay" rows="3" :disabled="practiceAnswered"
+                                      class="w-full bg-black/30 border-2 border-indigo-500/30 rounded-xl px-4 py-3 focus:border-indigo-500 focus:outline-none transition disabled:opacity-50 resize-none"
+                                      placeholder="Write your answer here in complete sentences..."></textarea>
+                            <button @click="submitPracticeEssay()" :disabled="!practiceEssay || practiceAnswered"
+                                    class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 disabled:bg-gray-600 py-3 rounded-xl font-bold transition">
+                                Submit Answer
+                            </button>
+                        </div>
+                    </template>
+
+                    <!-- Feedback Section -->
+                    <div x-show="practiceAnswered" class="mt-4 p-4 rounded-xl border-2" 
+                         :class="practiceCorrect ? 'bg-green-900/20 border-green-500' : 'bg-indigo-900/20 border-indigo-500'">
+                        <p class="font-bold text-lg mb-1" :class="practiceCorrect ? 'text-green-400' : 'text-indigo-400'">
+                            <span x-show="practiceCorrect">✅ Correct! W answer!</span>
+                            <span x-show="!practiceCorrect && practiceQs[practiceIdx].type !== 'Essay'">❌ Not quite, twin...</span>
+                            <span x-show="!practiceCorrect && practiceQs[practiceIdx].type === 'Essay'">📝 Answer submitted!</span>
+                        </p>
+                        <p class="text-sm text-gray-300" x-html="practiceQs[practiceIdx].explanation"></p>
+                        <button @click="nextPractice()" class="mt-3 w-full bg-white/10 hover:bg-white/20 py-2 rounded-lg text-sm transition">
+                            Next Question →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRACTICE RESULTS -->
+            <div x-show="practiceDone" class="text-center space-y-4" x-transition>
+                <div class="glass-card rounded-2xl p-8">
+                    <div class="text-7xl mb-4" x-text="practiceScore >= 20 ? '👑' : practiceScore >= 15 ? '🏆' : practiceScore >= 10 ? '🥈' : '📚'"></div>
+                    <h3 class="text-4xl font-black mb-2" x-text="practiceScore + '/25'"></h3>
+                    <p class="text-xl mb-2 font-bold" :class="practiceScore >= 20 ? 'text-yellow-400' : practiceScore >= 15 ? 'text-indigo-400' : 'text-gray-400'" 
+                       x-text="practiceScore >= 20 ? 'Sigma Grindset! Perfect!' : practiceScore >= 15 ? 'Certified W! You\'re ready!' : practiceScore >= 10 ? 'Getting there bestie!' : 'Skill issue (study more!)'">
+                    </p>
+                    
+                    <!-- Breakdown -->
+                    <div class="bg-black/30 rounded-xl p-4 mt-4 text-left">
+                        <h4 class="font-bold text-indigo-300 mb-2">📊 Breakdown:</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Multiple Choice (Q1-10):</span>
+                                <span class="text-green-400" x-text="practiceMCScore + '/10'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Fill in Blanks (Q11-20):</span>
+                                <span class="text-blue-400" x-text="practiceFIBScore + '/10'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Essay (Q21-25):</span>
+                                <span class="text-purple-400">Checked ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 mt-6">
+                        <button @click="resetPractice()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-3 rounded-xl font-bold transition">
+                            Run It Back 🔁
+                        </button>
+                        <button @click="practiceMode = false; practiceDone = false" class="w-full bg-white/10 hover:bg-white/20 py-3 rounded-xl text-sm transition">
+                            Back to Menu
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REAL QUIZ MODE (Simulation) -->
+            <div x-show="realQuizMode && !realQuizDone" class="space-y-4">
+                <div class="glass rounded-xl p-4 bg-red-900/20 border border-red-500/30">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-red-400">⏰ TEST SIMULATION</span>
+                        <span class="font-mono text-xl font-bold text-red-400" x-text="formatTime(realQuizTime)"></span>
+                    </div>
+                    <div class="h-2 bg-gray-700 rounded-full overflow-hidden mt-2">
+                        <div class="progress-bar h-full rounded-full" :style="'width:' + ((realQuizIdx+1)/25*100) + '%'"></div>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">Question <span x-text="realQuizIdx + 1"></span>/25 • No hints, no mercy!</p>
+                </div>
+
+                <div class="glass-card rounded-xl p-6">
+                    <!-- Reading Text for Q1-6 -->
+                    <div x-show="realQuizIdx < 6" class="bg-black/30 rounded-lg p-4 mb-4 border-l-4 border-red-500">
+                        <h4 class="font-bold text-red-300 mb-2 text-sm">📖 Reading Text:</h4>
+                        <p class="text-sm text-gray-300 leading-relaxed italic">
+                            "Alex and his family are at the airport. They have just checked in their baggage at the check-in counter. Now, they need to go through security before heading to their departure gate. Alex has been waiting in line for 15 minutes already. His little sister, Amelie, has been eating candy since they arrived. Their flight hasn't taken off yet, but they should board soon. After security, they will go to the departures area. Their plane will take off at 3:00 PM and land in Hanoi at 8:00 PM. Their mother has been working in Hanoi for six weeks already. She will meet them at arrivals when they land."
+                        </p>
+                    </div>
+
+                    <p class="text-lg font-semibold mb-6" x-html="realQuizQs[realQuizIdx].q"></p>
+
+                    <!-- MC -->
+                    <template x-if="realQuizQs[realQuizIdx].type === 'MC'">
+                        <div class="space-y-3">
+                            <template x-for="(opt, idx) in realQuizQs[realQuizIdx].opts" :key="idx">
+                                <button @click="realQuizSel = idx" 
+                                        :class="realQuizSel === idx ? 'bg-gradient-to-r from-red-600 to-pink-600 border-2 border-white/50' : 'bg-white/5 hover:bg-white/10 border-2 border-transparent'"
+                                        class="w-full text-left px-5 py-4 rounded-xl transition text-sm">
+                                    <span x-text="String.fromCharCode(65 + idx) + '. ' + opt"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- FIB -->
+                    <template x-if="realQuizQs[realQuizIdx].type === 'FIB'">
+                        <div class="space-y-4">
+                            <div class="flex flex-wrap gap-2 justify-center mb-4 opacity-50">
+                                <template x-for="word in realQuizQs[realQuizIdx].wordBank" :key="word">
+                                    <span class="text-xs bg-white/10 px-3 py-1 rounded-full text-gray-300" x-text="word"></span>
+                                </template>
+                            </div>
+                            <input type="text" x-model="realQuizInput" 
+                                   class="w-full bg-black/30 border-2 border-red-500/30 rounded-xl px-4 py-3 text-center text-lg focus:border-red-500 focus:outline-none transition"
+                                   placeholder="Type your answer...">
+                        </div>
+                    </template>
+
+                    <!-- Essay -->
+                    <template x-if="realQuizQs[realQuizIdx].type === 'Essay'">
+                        <textarea x-model="realQuizEssay" rows="3"
+                                  class="w-full bg-black/30 border-2 border-red-500/30 rounded-xl px-4 py-3 focus:border-red-500 focus:outline-none transition resize-none"
+                                  placeholder="Answer in complete sentences..."></textarea>
+                    </template>
+
+                    <button @click="nextRealQuiz()" 
+                            :disabled="(realQuizQs[realQuizIdx].type === 'MC' && realQuizSel === null) || (realQuizQs[realQuizIdx].type === 'FIB' && !realQuizInput) || (realQuizQs[realQuizIdx].type === 'Essay' && !realQuizEssay)"
+                            class="w-full mt-6 bg-gradient-to-r from-red-600 to-pink-600 hover:opacity-90 disabled:bg-gray-600 py-4 rounded-xl font-bold text-lg transition">
+                        <span x-text="realQuizIdx < 24 ? 'Lock In →' : 'Submit Test!'"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- REAL QUIZ RESULTS -->
+            <div x-show="realQuizDone" class="text-center space-y-4" x-transition>
+                <div class="glass-card rounded-2xl p-8 border-2 border-red-500/50">
+                    <div class="text-7xl mb-4" x-text="realQuizScore >= 20 ? '👑' : realQuizScore >= 15 ? '🏆' : realQuizScore >= 10 ? '🥈' : '📚'"></div>
+                    <h3 class="text-4xl font-black mb-2 text-red-400" x-text="realQuizScore + '/25'"></h3>
+                    <p class="text-sm text-gray-400 mb-4">Time: <span x-text="formatTime(realQuizTime)"></span></p>
+                    
+                    <p class="text-xl mb-6 font-bold" :class="realQuizScore >= 20 ? 'text-yellow-400' : realQuizScore >= 15 ? 'text-indigo-400' : 'text-gray-400'" 
+                       x-text="realQuizScore >= 20 ? 'Main Character Energy! Perfect Score!' : realQuizScore >= 15 ? 'You passed! Certified W!' : realQuizScore >= 10 ? 'Close! Review the material!' : 'Back to the grind, twin!'">
+                    </p>
+
+                    <div class="bg-black/30 rounded-xl p-4 mb-6">
+                        <h4 class="font-bold text-red-300 mb-2">📊 Score Breakdown:</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between border-b border-white/10 pb-2">
+                                <span>Multiple Choice:</span>
+                                <span class="text-green-400" x-text="realQuizMC + '/10'"></span>
+                            </div>
+                            <div class="flex justify-between border-b border-white/10 pb-2">
+                                <span>Fill in Blanks:</span>
+                                <span class="text-blue-400" x-text="realQuizFIB + '/10'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Essay Questions:</span>
+                                <span class="text-purple-400" x-text="realQuizEssayCount + '/5 submitted'"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button @click="resetRealQuiz()" class="w-full bg-red-600 hover:bg-red-500 py-3 rounded-xl font-bold transition">
+                            Try Again 🔁
+                        </button>
+                        <button @click="realQuizMode = false; realQuizDone = false" class="w-full bg-white/10 hover:bg-white/20 py-3 rounded-xl text-sm transition">
+                            Back to Menu
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('app', () => ({
+                section: 'vocab',
+                aura: 0,
+
+                vocab: [{
+                        english: 'check-in',
+                        indonesian: 'cek in',
+                        example: 'I need to check-in at the counter.',
+                        flipped: false,
+                        image: 'https://media1.tenor.com/m/QJ8qtKAk4mcAAAAd/victoria-wood-airport.gif'
+                    },
+                    {
+                        english: 'departure gate',
+                        indonesian: 'pintu keberangkatan',
+                        example: 'The departure gate is C12.',
+                        flipped: false,
+                        image: 'https://solve.bhmystery.com/images/blog/airport_update_departure_gate_hu_35c68ba1a36e8fbf.webp'
+                    },
+                    {
+                        english: 'security',
+                        indonesian: 'keamanan',
+                        example: 'We must go through security.',
+                        flipped: false,
+                        image: 'https://media.tenor.com/KQ6NsjCFIGUAAAAM/tsa-airport.gif'
+                    },
+                    {
+                        english: 'baggage claim',
+                        indonesian: 'pengambilan bagasi',
+                        example: 'Wait at baggage claim.',
+                        flipped: false,
+                        image: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExcTNqcXNsbTh5ODh5ejdvMjhleGU2aGtncmF1cXB0dnZhMDdnNmVtOCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/DiLmE01wQTyRIztH91/giphy.webp'
+                    },
+                    {
+                        english: 'terminal',
+                        indonesian: 'terminal',
+                        example: 'Terminal 3 for international.',
+                        flipped: false,
+                        image: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdmRtOHFycTcyeXRqa3ZpZ2NuZm9mZ2FoNnNqbDZzZmZ6OGQzemQybCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/HcWRusM3bxH92PadhR/giphy.webp'
+                    },
+                    {
+                        english: 'parking',
+                        indonesian: 'parkir',
+                        example: 'The parking is full.',
+                        flipped: false,
+                        image: 'https://media.tenor.com/AC-Qkr46e60AAAAM/tv-land-king-of-queens.gif'
+                    },
+                    {
+                        english: 'passport',
+                        indonesian: 'paspor',
+                        example: 'Do not forget your passport!',
+                        flipped: false,
+                        image: 'https://i.kym-cdn.com/photos/images/masonry/003/113/134/10f.png'
+                    },
+                    {
+                        english: 'take off',
+                        indonesian: 'lepas landas',
+                        example: 'The plane will take off soon.',
+                        flipped: false,
+                        image: 'https://media.tenor.com/y1EW2jeDMkgAAAAM/airbus-plane.gif'
+                    },
+                    {
+                        english: 'customs',
+                        indonesian: 'bea cukai',
+                        example: 'Go through customs.',
+                        flipped: false,
+                        image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeyVaaaC868KphWNB5T2VObXP3uRd8EWU6ew&s'
+                    },
+                    {
+                        english: 'boarding pass',
+                        indonesian: 'kartu boarding',
+                        example: 'Show your boarding pass.',
+                        flipped: false,
+                        image: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExYTZ1ZzQ2MG9yMDZkejFjaHJkajJ1YmtmN2Ryc2lyOTR2ajVpdHF5cyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3ohjVaI5aD41Mr9btC/100.webp'
+                    }
+                ],
+
+                gameSteps: [{
+                        text: 'Check-in',
+                        placed: false
+                    },
+                    {
+                        text: 'Security',
+                        placed: false
+                    },
+                    {
+                        text: 'Bus',
+                        placed: false
+                    },
+                    {
+                        text: 'Parking',
+                        placed: false
+                    },
+                    {
+                        text: 'Customs',
+                        placed: false
+                    },
+                    {
+                        text: 'Terminal',
+                        placed: false
+                    },
+                    {
+                        text: 'Baggage Claim',
+                        placed: false
+                    },
+                    {
+                        text: 'Departure Gate',
+                        placed: false
+                    }
+                ],
+                dropZones: [null, null, null, null, null, null],
+                gameTime: 0,
+                draggedIdx: null,
+                gameMessage: '',
+                gameWin: false,
+
+                forSinceQs: [{
+                        sentence: 'I have been waiting _____ 2 hours.',
+                        ans: 'for'
+                    },
+                    {
+                        sentence: 'She has lived here _____ 2020.',
+                        ans: 'since'
+                    },
+                    {
+                        sentence: 'They have been studying _____ morning.',
+                        ans: 'since'
+                    },
+                    {
+                        sentence: 'We have traveled _____ 5 days.',
+                        ans: 'for'
+                    }
+                ],
+                forSinceAns: [null, null, null, null],
+                get forSinceFeedback() {
+                    return this.forSinceQs.map((q, i) => {
+                        if (!this.forSinceAns[i]) return '';
+                        return this.forSinceAns[i] === q.ans ? '✅ W! ' + (q.ans === 'for' ? 'For + duration' : 'Since + starting point') : '❌ L + Ratio, try again!';
+                    });
+                },
+
+                chatAns: [null, null],
+
+                storyQuestions: [{
+                        question: 'Why did Alex and Dad go to the airport?',
+                        options: ['Vacation', 'Moving to Vietnam', 'Picking up family', 'Business trip'],
+                        correct: 1
+                    },
+                    {
+                        question: 'What happened to Amelie?',
+                        options: ['She took the wrong flight', 'She went missing', 'She lost her passport', 'She missed the bus'],
+                        correct: 1
+                    },
+                    {
+                        question: 'How did they find Amelie?',
+                        options: ['Security announcement', 'Following dropped candy', 'She called them', 'Airport staff found her'],
+                        correct: 1
+                    }
+                ],
+                storyAnswers: [null, null, null],
+                get storyComplete() {
+                    return this.storyAnswers.filter((a, i) => a === this.storyQuestions[i].correct).length === 3;
+                },
+
+                // FINAL BOSS - PRACTICE MODE
+                practiceMode: false,
+                practiceDone: false,
+                practiceIdx: 0,
+                practiceSel: null,
+                practiceInput: '',
+                practiceEssay: '',
+                practiceAnswered: false,
+                practiceCorrect: false,
+                practiceScore: 0,
+                practiceMCScore: 0,
+                practiceFIBScore: 0,
+                
+                practiceQs: [
+                    // MC Questions 1-10
+                    {
+                        q: "Where do Alex and his family go after check-in?",
+                        opts: ["Baggage claim", "Security", "Parking", "Arrivals"],
+                        correct: 1,
+                        type: "MC",
+                        explanation: "✅ <strong>Security</strong> is correct! According to the text: 'Now, they need to go through security before heading to their departure gate.'"
+                    },
+                    {
+                        q: "What has Alex been doing for 15 minutes?",
+                        opts: ["Eating candy", "Waiting in line", "Boarding the plane", "Working"],
+                        correct: 1,
+                        type: "MC",
+                        explanation: "✅ <strong>Waiting in line</strong> is correct! The text says: 'Alex has been waiting in line for 15 minutes already.'"
+                    },
+                    {
+                        q: "The word 'departures' in the text means...",
+                        opts: ["where planes land", "where you pick up baggage", "where planes take off from", "where you park your car"],
+                        correct: 2,
+                        type: "MC",
+                        explanation: "✅ <strong>Where planes take off from</strong> is correct! Departures = area where planes leave (keberangkatan)."
+                    },
+                    {
+                        q: "How long has their mother been working in Hanoi?",
+                        opts: ["For six days", "Since six weeks", "For six weeks", "Since yesterday"],
+                        correct: 2,
+                        type: "MC",
+                        explanation: "✅ <strong>For six weeks</strong> is correct! Use FOR + duration (six weeks). 'Since' needs a specific time (since 2020, since morning)."
+                    },
+                    {
+                        q: "Where will they meet their mother?",
+                        opts: ["At check-in", "At security", "At departures", "At arrivals"],
+                        correct: 3,
+                        type: "MC",
+                        explanation: "✅ <strong>At arrivals</strong> is correct! The text says: 'She will meet them at arrivals when they land.'"
+                    },
+                    {
+                        q: "Which sentence uses Present Perfect Progressive correctly?",
+                        opts: ["She work in Hanoi for six weeks.", "She has working in Hanoi for six weeks.", "She has been working in Hanoi for six weeks.", "She is work in Hanoi since six weeks."],
+                        correct: 2,
+                        type: "MC",
+                        explanation: "✅ <strong>She has been working in Hanoi for six weeks</strong> is correct! Formula: S + has/have + been + V-ing."
+                    },
+                    {
+                        q: "I have ______ waiting for my flight since 2 PM.",
+                        opts: ["be", "been", "being", "was"],
+                        correct: 1,
+                        type: "MC",
+                        explanation: "✅ <strong>been</strong> is correct! Present Perfect Progressive: have/has + BEEN + verb-ing."
+                    },
+                    {
+                        q: "They have been studying English ______ five years.",
+                        opts: ["since", "for", "already", "yet"],
+                        correct: 1,
+                        type: "MC",
+                        explanation: "✅ <strong>for</strong> is correct! Use FOR + duration (five years). SINCE is for starting points (since 2020)."
+                    },
+                    {
+                        q: "Has the plane taken off ______?",
+                        opts: ["just", "already", "yet", "still"],
+                        correct: 2,
+                        type: "MC",
+                        explanation: "✅ <strong>yet</strong> is correct! Use YET in questions and negatives, usually at the END of the sentence."
+                    },
+                    {
+                        q: "We have ______ checked in our bags. Let's go to security now.",
+                        opts: ["yet", "still", "already", "since"],
+                        correct: 2,
+                        type: "MC",
+                        explanation: "✅ <strong>already</strong> is correct! ALREADY = sudah (something happened before now/earlier than expected)."
+                    },
+                    // FIB Questions 11-20
+                    {
+                        q: "You show your ticket and give your bags at the ______.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["check-in", "check in"],
+                        type: "FIB",
+                        explanation: "✅ <strong>check-in</strong> (or check in) is correct! This is where you show your ticket and give your luggage."
+                    },
+                    {
+                        q: "Before you board the plane, you go through ______.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["security"],
+                        type: "FIB",
+                        explanation: "✅ <strong>security</strong> is correct! You must pass through security check before boarding."
+                    },
+                    {
+                        q: "Your plane will ______ from the airport at 3:00 PM.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["take off", "takeoff"],
+                        type: "FIB",
+                        explanation: "✅ <strong>take off</strong> is correct! This means the plane leaves the ground (lepas landas)."
+                    },
+                    {
+                        q: "When you arrive, you pick up your bags at ______.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["baggage claim"],
+                        type: "FIB",
+                        explanation: "✅ <strong>baggage claim</strong> is correct! This is where you collect your luggage after landing."
+                    },
+                    {
+                        q: "You need a ______ to travel to another country.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["passport"],
+                        type: "FIB",
+                        explanation: "✅ <strong>passport</strong> is correct! You need this important document for international travel."
+                    },
+                    {
+                        q: "The area where planes arrive is called ______.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["arrivals"],
+                        type: "FIB",
+                        explanation: "✅ <strong>arrivals</strong> is correct! This is where passengers come out after landing (kedatangan)."
+                    },
+                    {
+                        q: "You wait for your flight at the ______.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["departure gate", "gate"],
+                        type: "FIB",
+                        explanation: "✅ <strong>departure gate</strong> (or just gate) is correct! This is where you wait before boarding."
+                    },
+                    {
+                        q: "You leave your car in the ______ area.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["parking"],
+                        type: "FIB",
+                        explanation: "✅ <strong>parking</strong> is correct! This is where you park your vehicle at the airport."
+                    },
+                    {
+                        q: "Your plane will ______ in another city.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["land"],
+                        type: "FIB",
+                        explanation: "✅ <strong>land</strong> is correct! This means the plane touches down at the destination (mendarat)."
+                    },
+                    {
+                        q: "You board the plane at your ______.",
+                        wordBank: ["security", "check-in", "departure gate", "arrivals", "baggage claim", "take off", "land", "passport", "terminal", "parking"],
+                        correct: ["departure gate", "gate"],
+                        type: "FIB",
+                        explanation: "✅ <strong>departure gate</strong> is correct! You enter the plane at the assigned gate."
+                    },
+                    // Essay Questions 21-25
+                    {
+                        q: "21. Complete with FOR or SINCE: 'I have been living in this city ______ 2020.'",
+                        type: "Essay",
+                        explanation: "✅ Answer: <strong>since</strong><br>💡 Explanation: Use SINCE + specific starting point (2020, Monday, 9 AM). Use FOR + duration (2 hours, 3 days)."
+                    },
+                    {
+                        q: "22. Write one sentence about yourself using Present Perfect Progressive (have/has been + verb-ing).",
+                        type: "Essay",
+                        explanation: "✅ Example answers:<br>• 'I have been studying English for 3 years.'<br>• 'She has been playing games since morning.'<br>• 'We have been waiting for the bus for 20 minutes.'<br><br>Formula: Subject + have/has + been + verb-ing"
+                    },
+                    {
+                        q: "23. Imagine you are making a welcome pack for exchange students. Name ONE thing you would include to help them.",
+                        type: "Essay",
+                        explanation: "✅ Any reasonable answer accepted! Examples:<br>• A map of the school<br>• Emergency contact numbers<br>• Local snacks/food guide<br>• Translation dictionary<br>• School rules handbook"
+                    },
+                    {
+                        q: "24. Write one piece of feedback about an airport experience. Use ALREADY or YET in your sentence.",
+                        type: "Essay",
+                        explanation: "✅ Example answers:<br>• 'I have already checked in at the counter.'<br>• 'The flight hasn't taken off yet.'<br>• 'We have already gone through security.'<br>• 'I haven't found my gate yet.'"
+                    },
+                    {
+                        q: "25. Write one question you could ask an exchange student using Present Perfect Progressive.",
+                        type: "Essay",
+                        explanation: "✅ Example questions:<br>• 'How long have you been studying English?'<br>• 'Have you been living here for a long time?'<br>• 'What have you been doing since you arrived?'<br>• 'How long have you been waiting?'"
+                    }
+                ],
+
+                // FINAL BOSS - REAL QUIZ MODE
+                realQuizMode: false,
+                realQuizDone: false,
+                realQuizIdx: 0,
+                realQuizSel: null,
+                realQuizInput: '',
+                realQuizEssay: '',
+                realQuizTime: 0,
+                realQuizScore: 0,
+                realQuizMC: 0,
+                realQuizFIB: 0,
+                realQuizEssayCount: 0,
+                realQuizTimer: null,
+                
+                realQuizQs: [], // Will be populated from practiceQs
+
+                init() {
+                    setInterval(() => this.gameTime++, 1000);
+                },
+
+                flipCard(i) {
+                    this.vocab[i].flipped = !this.vocab[i].flipped;
+                    this.aura += 10;
+                },
+
+                speak(text) {
+                    if ('speechSynthesis' in window) {
+                        speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+                    }
+                },
+
+                copyWord(text) {
+                    navigator.clipboard.writeText(text);
+                    this.aura += 5;
+                },
+
+                formatTime(s) {
+                    return Math.floor(s / 60).toString().padStart(2, '0') + ':' + (s % 60).toString().padStart(2, '0');
+                },
+
+                dragStart(i) {
+                    this.draggedIdx = i;
+                },
+
+                drop(zoneIdx) {
+                    if (this.draggedIdx !== null && !this.dropZones[zoneIdx]) {
+                        this.dropZones[zoneIdx] = this.gameSteps[this.draggedIdx].text;
+                        this.gameSteps[this.draggedIdx].placed = true;
+                        this.draggedIdx = null;
+                    }
+                },
+
+                checkGame() {
+                    const correct = ['Parking', 'Bus', 'Terminal', 'Check-in', 'Security', 'Departure Gate'];
+                    const isCorrect = this.dropZones.every((z, i) => z === correct[i]);
+                    this.gameWin = isCorrect;
+                    this.gameMessage = isCorrect ? '🎉 Certified W! Perfect order!' : '❌ Almost bestie, try again!';
+                    if (isCorrect) this.aura += 100;
+                },
+
+                resetGame() {
+                    this.dropZones = [null, null, null, null, null, null];
+                    this.gameSteps.forEach(s => s.placed = false);
+                    this.gameTime = 0;
+                    this.gameMessage = '';
+                },
+
+                checkForSince(idx, ans) {
+                    this.forSinceAns[idx] = ans;
+                    if (ans === this.forSinceQs[idx].ans) this.aura += 25;
+                },
+
+                setChat(idx, word) {
+                    this.chatAns[idx] = word;
+                    this.aura += 15;
+                },
+
+                answerStory(q, a) {
+                    this.storyAnswers[q] = a;
+                    if (a === this.storyQuestions[q].correct) this.aura += 20;
+                },
+
+                // FINAL BOSS FUNCTIONS
+                startPractice() {
+                    this.practiceMode = true;
+                    this.practiceIdx = 0;
+                    this.practiceScore = 0;
+                    this.practiceMCScore = 0;
+                    this.practiceFIBScore = 0;
+                    this.resetPracticeQuestion();
+                },
+
+                resetPracticeQuestion() {
+                    this.practiceSel = null;
+                    this.practiceInput = '';
+                    this.practiceEssay = '';
+                    this.practiceAnswered = false;
+                    this.practiceCorrect = false;
+                },
+
+                selectPractice(idx) {
+                    this.practiceSel = idx;
+                    this.checkPracticeAnswer();
+                },
+
+                checkPracticeAnswer() {
+                    this.practiceAnswered = true;
+                    this.practiceCorrect = this.practiceSel === this.practiceQs[this.practiceIdx].correct;
+                    
+                    if (this.practiceCorrect) {
+                        this.practiceScore++;
+                        if (this.practiceQs[this.practiceIdx].type === 'MC') this.practiceMCScore++;
+                        this.aura += 10;
+                    }
+                },
+
+                checkPracticeFIB() {
+                    const correctAnswers = this.practiceQs[this.practiceIdx].correct;
+                    const userAns = this.practiceInput.trim().toLowerCase();
+                    this.practiceAnswered = true;
+                    this.practiceCorrect = correctAnswers.some(ans => userAns === ans.toLowerCase());
+                    
+                    if (this.practiceCorrect) {
+                        this.practiceScore++;
+                        this.practiceFIBScore++;
+                        this.aura += 10;
+                    }
+                },
+
+                submitPracticeEssay() {
+                    this.practiceAnswered = true;
+                    this.practiceCorrect = true; // Essays always "correct" in practice, just checked
+                    this.aura += 5;
+                },
+
+                nextPractice() {
+                    if (this.practiceIdx < this.practiceQs.length - 1) {
+                        this.practiceIdx++;
+                        this.resetPracticeQuestion();
+                    } else {
+                        this.practiceDone = true;
+                        if (this.practiceScore >= 20) this.aura += 100;
+                    }
+                },
+
+                resetPractice() {
+                    this.practiceIdx = 0;
+                    this.practiceDone = false;
+                    this.resetPracticeQuestion();
+                    this.startPractice();
+                },
+
+                startRealQuiz() {
+                    this.realQuizMode = true;
+                    this.realQuizIdx = 0;
+                    this.realQuizScore = 0;
+                    this.realQuizMC = 0;
+                    this.realQuizFIB = 0;
+                    this.realQuizEssayCount = 0;
+                    this.realQuizTime = 0;
+                    this.realQuizQs = JSON.parse(JSON.stringify(this.practiceQs)); // Deep copy
+                    this.realQuizTimer = setInterval(() => this.realQuizTime++, 1000);
+                    this.resetRealQuizQuestion();
+                },
+
+                resetRealQuizQuestion() {
+                    this.realQuizSel = null;
+                    this.realQuizInput = '';
+                    this.realQuizEssay = '';
+                },
+
+                nextRealQuiz() {
+                    // Score current question
+                    const q = this.realQuizQs[this.realQuizIdx];
+                    if (q.type === 'MC') {
+                        if (this.realQuizSel === q.correct) {
+                            this.realQuizScore++;
+                            this.realQuizMC++;
+                        }
+                    } else if (q.type === 'FIB') {
+                        const userAns = this.realQuizInput.trim().toLowerCase();
+                        if (q.correct.some(ans => userAns === ans.toLowerCase())) {
+                            this.realQuizScore++;
+                            this.realQuizFIB++;
+                        }
+                    } else if (q.type === 'Essay') {
+                        this.realQuizEssayCount++;
+                    }
+
+                    if (this.realQuizIdx < this.realQuizQs.length - 1) {
+                        this.realQuizIdx++;
+                        this.resetRealQuizQuestion();
+                    } else {
+                        clearInterval(this.realQuizTimer);
+                        this.realQuizDone = true;
+                        if (this.realQuizScore >= 20) this.aura += 200;
+                    }
+                },
+
+                resetRealQuiz() {
+                    clearInterval(this.realQuizTimer);
+                    this.realQuizIdx = 0;
+                    this.realQuizDone = false;
+                    this.startRealQuiz();
+                }
+            }));
+        });
+    </script>
+</body>
+
+</html>
